@@ -618,5 +618,736 @@ docker run -d \\<br/>
     image: 'https://images.pexels.com/photos/577585/pexels-photo-577585.jpeg?auto=compress&cs=tinysrgb&w=800',
     category: 'Docker',
     readTime: '15 min read'
+  },
+  {
+    id: '2',
+    title: 'Everything is File: Understanding Linux\'s Fundamental Philosophy',
+    excerpt: 'Explore the core principle that makes Linux unique - how treating everything as a file creates a unified, powerful, and elegant system design.',
+    content: `
+      <div class="tldr-section">
+        <h2>📝 TL;DR</h2>
+        <p><strong>Concept:</strong> In Linux, everything is treated as a file - devices, processes, network connections, and system information.</p>
+        <p><strong>Benefits:</strong> Unified interface, simple tools, powerful scripting, consistent access patterns.</p>
+        <p><strong>Examples:</strong> /dev/null, /proc/cpuinfo, /sys/class/net, pipes, sockets.</p>
+        <p><strong>Impact:</strong> This philosophy enables Linux's modularity, scriptability, and the power of command-line tools.</p>
+      </div>
+      
+      <hr/>
+
+      <h2>🐧 The Unix Philosophy: Everything is a File</h2>
+
+      <p>One of the most elegant and powerful concepts in Linux (inherited from Unix) is the principle that "everything is a file." This isn't just a catchy phrase - it's a fundamental design philosophy that shapes how Linux systems work at their core.</p>
+
+      <p>When we say "everything is a file," we mean that Linux provides a unified interface for interacting with different types of system resources. Whether you're dealing with hardware devices, running processes, network connections, or system information, they can all be accessed using the same file operations: open, read, write, and close.</p>
+
+      <h3>Why This Philosophy Matters</h3>
+
+      <p>This unified approach brings several powerful advantages:</p>
+      <ul>
+        <li><strong>Simplicity:</strong> One set of tools works with everything</li>
+        <li><strong>Consistency:</strong> Predictable interfaces across the system</li>
+        <li><strong>Composability:</strong> Tools can be combined in powerful ways</li>
+        <li><strong>Scriptability:</strong> Everything can be automated</li>
+        <li><strong>Transparency:</strong> System internals are accessible and inspectable</li>
+      </ul>
+
+      <hr/>
+
+      <h2>🗂️ Types of "Files" in Linux</h2>
+
+      <h3>1. Regular Files</h3>
+      <p>These are what most people think of as files - documents, images, executables, and data files stored on disk.</p>
+
+      <div class="code-block">
+        <div class="code-title">Regular File Operations</div>
+        <code>
+# Create a file<br/>
+echo "Hello World" > myfile.txt<br/>
+<br/>
+# Read a file<br/>
+cat myfile.txt<br/>
+<br/>
+# Check file type<br/>
+file myfile.txt<br/>
+# Output: myfile.txt: ASCII text
+        </code>
+      </div>
+
+      <h3>2. Device Files</h3>
+      <p>Hardware devices are represented as files in the <code>/dev</code> directory. This allows programs to interact with hardware using standard file operations.</p>
+
+      <div class="code-block">
+        <div class="code-title">Device File Examples</div>
+        <code>
+# List device files<br/>
+ls -la /dev/ | head -10<br/>
+<br/>
+# The famous /dev/null - discards all data written to it<br/>
+echo "This disappears" > /dev/null<br/>
+<br/>
+# /dev/zero - provides infinite null bytes<br/>
+dd if=/dev/zero of=empty_file bs=1024 count=1<br/>
+<br/>
+# /dev/random - provides random data<br/>
+head -c 10 /dev/random | base64<br/>
+<br/>
+# Hard disk devices<br/>
+ls /dev/sd*  # SATA/SCSI drives<br/>
+ls /dev/nvme*  # NVMe drives
+        </code>
+      </div>
+
+      <h3>3. Process Information (/proc filesystem)</h3>
+      <p>The <code>/proc</code> filesystem provides a window into running processes and system information. Each process has a directory under <code>/proc</code> with its process ID.</p>
+
+      <div class="code-block">
+        <div class="code-title">Process Information Examples</div>
+        <code>
+# System information<br/>
+cat /proc/cpuinfo     # CPU details<br/>
+cat /proc/meminfo     # Memory information<br/>
+cat /proc/version     # Kernel version<br/>
+cat /proc/uptime      # System uptime<br/>
+<br/>
+# Process-specific information<br/>
+cat /proc/self/status    # Current process status<br/>
+cat /proc/1/cmdline      # Init process command line<br/>
+ls /proc/1/fd/           # File descriptors of process 1<br/>
+<br/>
+# Network information<br/>
+cat /proc/net/tcp        # TCP connections<br/>
+cat /proc/net/route      # Routing table
+        </code>
+      </div>
+
+      <h3>4. System Information (/sys filesystem)</h3>
+      <p>The <code>/sys</code> filesystem exposes kernel objects, their attributes, and relationships in a structured way.</p>
+
+      <div class="code-block">
+        <div class="code-title">System Information Examples</div>
+        <code>
+# Hardware information<br/>
+ls /sys/class/net/           # Network interfaces<br/>
+cat /sys/class/thermal/thermal_zone0/temp  # CPU temperature<br/>
+<br/>
+# Block devices<br/>
+ls /sys/block/               # All block devices<br/>
+cat /sys/block/sda/size      # Disk size in sectors<br/>
+<br/>
+# Power management<br/>
+cat /sys/power/state         # Available power states<br/>
+cat /sys/class/power_supply/BAT0/capacity  # Battery level
+        </code>
+      </div>
+
+      <hr/>
+
+      <h2>🔧 Practical Applications</h2>
+
+      <h3>System Monitoring Made Simple</h3>
+
+      <p>Because system information is exposed as files, monitoring becomes incredibly straightforward:</p>
+
+      <div class="code-block">
+        <div class="code-title">System Monitoring Scripts</div>
+        <code>
+#!/bin/bash<br/>
+# Simple system monitor<br/>
+<br/>
+echo "=== System Information ==="<br/>
+echo "Uptime: $(cat /proc/uptime | cut -d' ' -f1) seconds"<br/>
+echo "Load Average: $(cat /proc/loadavg)"<br/>
+echo "Memory Usage:"<br/>
+grep -E "(MemTotal|MemFree|MemAvailable)" /proc/meminfo<br/>
+<br/>
+echo "=== Network Interfaces ==="<br/>
+for iface in /sys/class/net/*; do<br/>
+&nbsp;&nbsp;name=$(basename $iface)<br/>
+&nbsp;&nbsp;if [ "$name" != "lo" ]; then<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;echo "$name: $(cat $iface/operstate)"<br/>
+&nbsp;&nbsp;fi<br/>
+done
+        </code>
+      </div>
+
+      <h3>Hardware Control</h3>
+
+      <p>You can control hardware directly by writing to device files:</p>
+
+      <div class="code-block">
+        <div class="code-title">Hardware Control Examples</div>
+        <code>
+# Control screen brightness (requires appropriate permissions)<br/>
+echo 50 > /sys/class/backlight/intel_backlight/brightness<br/>
+<br/>
+# Enable/disable network interface<br/>
+echo 1 > /sys/class/net/eth0/carrier<br/>
+<br/>
+# Set CPU governor<br/>
+echo "performance" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor<br/>
+<br/>
+# Control LED (on systems with controllable LEDs)<br/>
+echo 1 > /sys/class/leds/led0/brightness
+        </code>
+      </div>
+
+      <h3>Process Management</h3>
+
+      <p>Process information and control through the filesystem:</p>
+
+      <div class="code-block">
+        <div class="code-title">Process Management</div>
+        <code>
+# Find process by name and get its PID<br/>
+pgrep firefox<br/>
+<br/>
+# Get detailed process information<br/>
+cat /proc/$(pgrep firefox)/status<br/>
+<br/>
+# See what files a process has open<br/>
+ls -la /proc/$(pgrep firefox)/fd/<br/>
+<br/>
+# Check process memory maps<br/>
+cat /proc/$(pgrep firefox)/maps<br/>
+<br/>
+# Send signal to process (alternative to kill command)<br/>
+echo 15 > /proc/$(pgrep firefox)/oom_score_adj
+        </code>
+      </div>
+
+      <hr/>
+
+      <h2>🔗 Special File Types</h2>
+
+      <h3>Named Pipes (FIFOs)</h3>
+
+      <p>Named pipes allow processes to communicate through the filesystem:</p>
+
+      <div class="code-block">
+        <div class="code-title">Named Pipes</div>
+        <code>
+# Create a named pipe<br/>
+mkfifo mypipe<br/>
+<br/>
+# In terminal 1: write to pipe<br/>
+echo "Hello from terminal 1" > mypipe<br/>
+<br/>
+# In terminal 2: read from pipe<br/>
+cat mypipe<br/>
+# Output: Hello from terminal 1<br/>
+<br/>
+# Use in scripts for process communication<br/>
+mkfifo /tmp/logger_pipe<br/>
+tail -f /tmp/logger_pipe | while read line; do<br/>
+&nbsp;&nbsp;echo "$(date): $line" >> /var/log/myapp.log<br/>
+done &
+        </code>
+      </div>
+
+      <h3>Unix Domain Sockets</h3>
+
+      <p>Sockets appear as files and enable inter-process communication:</p>
+
+      <div class="code-block">
+        <div class="code-title">Unix Sockets</div>
+        <code>
+# List socket files<br/>
+find /tmp -type s 2>/dev/null<br/>
+find /var/run -type s 2>/dev/null<br/>
+<br/>
+# Common system sockets<br/>
+ls -la /var/run/docker.sock    # Docker daemon socket<br/>
+ls -la /tmp/.X11-unix/         # X11 display sockets<br/>
+<br/>
+# Connect to socket with netcat<br/>
+echo "GET / HTTP/1.0" | nc -U /var/run/some-service.sock
+        </code>
+      </div>
+
+      <h3>Symbolic and Hard Links</h3>
+
+      <p>Links create multiple names for the same file:</p>
+
+      <div class="code-block">
+        <div class="code-title">File Links</div>
+        <code>
+# Create hard link (same inode)<br/>
+ln original.txt hardlink.txt<br/>
+<br/>
+# Create symbolic link (pointer to another file)<br/>
+ln -s /usr/bin/python3 python<br/>
+<br/>
+# Check link information<br/>
+ls -li original.txt hardlink.txt<br/>
+ls -la python<br/>
+<br/>
+# Find all hard links to a file<br/>
+find / -samefile original.txt 2>/dev/null
+        </code>
+      </div>
+
+      <hr/>
+
+      <h2>⚡ Power of File-Based Operations</h2>
+
+      <h3>Redirection and Pipes</h3>
+
+      <p>The file-based approach makes input/output redirection incredibly powerful:</p>
+
+      <div class="code-block">
+        <div class="code-title">Redirection Examples</div>
+        <code>
+# Redirect output to file<br/>
+ls -la > directory_listing.txt<br/>
+<br/>
+# Append to file<br/>
+date >> log.txt<br/>
+<br/>
+# Redirect stderr<br/>
+command_that_fails 2> error.log<br/>
+<br/>
+# Redirect both stdout and stderr<br/>
+command > output.log 2>&1<br/>
+<br/>
+# Use /dev/null to discard output<br/>
+noisy_command > /dev/null 2>&1<br/>
+<br/>
+# Pipe between commands<br/>
+ps aux | grep firefox | awk '{print $2}' | xargs kill
+        </code>
+      </div>
+
+      <h3>File Descriptors</h3>
+
+      <p>Understanding file descriptors helps you work with the file-based model:</p>
+
+      <div class="code-block">
+        <div class="code-title">File Descriptors</div>
+        <code>
+# Standard file descriptors<br/>
+# 0 = stdin (standard input)<br/>
+# 1 = stdout (standard output)<br/>
+# 2 = stderr (standard error)<br/>
+<br/>
+# See open file descriptors for current shell<br/>
+ls -la /proc/$$/fd/<br/>
+<br/>
+# Redirect using file descriptor numbers<br/>
+echo "Error message" >&2<br/>
+<br/>
+# Create custom file descriptor<br/>
+exec 3> custom.log<br/>
+echo "Custom log entry" >&3<br/>
+exec 3>&-  # Close file descriptor 3
+        </code>
+      </div>
+
+      <hr/>
+
+      <h2>🛠️ Advanced Techniques</h2>
+
+      <h3>Memory-Mapped Files</h3>
+
+      <p>Some "files" exist only in memory but can be accessed like regular files:</p>
+
+      <div class="code-block">
+        <div class="code-title">Memory-Based Filesystems</div>
+        <code>
+# tmpfs - temporary filesystem in RAM<br/>
+mount -t tmpfs -o size=100M tmpfs /mnt/ramdisk<br/>
+<br/>
+# Create files in RAM<br/>
+echo "This is stored in RAM" > /mnt/ramdisk/temp.txt<br/>
+<br/>
+# Check memory usage<br/>
+df -h /mnt/ramdisk<br/>
+<br/>
+# /dev/shm - shared memory filesystem<br/>
+echo "Shared memory file" > /dev/shm/shared.txt<br/>
+ls -la /dev/shm/
+        </code>
+      </div>
+
+      <h3>Virtual Filesystems</h3>
+
+      <p>Linux uses virtual filesystems to expose kernel information:</p>
+
+      <div class="code-block">
+        <div class="code-title">Virtual Filesystem Examples</div>
+        <code>
+# debugfs - kernel debugging information<br/>
+mount -t debugfs none /sys/kernel/debug<br/>
+<br/>
+# configfs - kernel object configuration<br/>
+ls /sys/kernel/config/<br/>
+<br/>
+# securityfs - security module information<br/>
+ls /sys/kernel/security/<br/>
+<br/>
+# Check mounted filesystems<br/>
+cat /proc/mounts | grep -E "(proc|sys|dev)"
+        </code>
+      </div>
+
+      <hr/>
+
+      <h2>🎯 Real-World Applications</h2>
+
+      <h3>System Administration</h3>
+
+      <div class="code-block">
+        <div class="code-title">Admin Tasks Using File Operations</div>
+        <code>
+# Monitor system resources<br/>
+watch -n 1 'cat /proc/loadavg && echo && cat /proc/meminfo | head -3'<br/>
+<br/>
+# Find processes using most memory<br/>
+for pid in $(ls /proc | grep -E '^[0-9]+$'); do<br/>
+&nbsp;&nbsp;if [ -r /proc/$pid/status ]; then<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;echo "$pid $(grep VmRSS /proc/$pid/status)"<br/>
+&nbsp;&nbsp;fi<br/>
+done | sort -k3 -n | tail -5<br/>
+<br/>
+# Network monitoring<br/>
+watch -n 1 'cat /proc/net/dev'<br/>
+<br/>
+# Disk I/O statistics<br/>
+cat /proc/diskstats
+        </code>
+      </div>
+
+      <h3>Security and Forensics</h3>
+
+      <div class="code-block">
+        <div class="code-title">Security Applications</div>
+        <code>
+# Check what files a suspicious process has open<br/>
+ls -la /proc/$(pgrep suspicious_process)/fd/<br/>
+<br/>
+# Monitor file access<br/>
+inotifywait -m /etc/passwd<br/>
+<br/>
+# Check process environment variables<br/>
+cat /proc/$(pgrep process_name)/environ | tr '\\0' '\\n'<br/>
+<br/>
+# Find processes with network connections<br/>
+lsof -i<br/>
+# Or using /proc<br/>
+cat /proc/net/tcp | awk '{print $2}' | grep -v local_address
+        </code>
+      </div>
+
+      <hr/>
+
+      <h2>🔍 Troubleshooting with Files</h2>
+
+      <h3>Common Debugging Techniques</h3>
+
+      <div class="code-block">
+        <div class="code-title">Debugging Using File System</div>
+        <code>
+# Check if a process is still running<br/>
+test -d /proc/1234 && echo "Process 1234 is running"<br/>
+<br/>
+# See what a process is currently doing<br/>
+cat /proc/1234/stack<br/>
+<br/>
+# Check process limits<br/>
+cat /proc/1234/limits<br/>
+<br/>
+# Monitor file descriptor usage<br/>
+ls /proc/1234/fd/ | wc -l<br/>
+<br/>
+# Check memory usage of specific process<br/>
+cat /proc/1234/smaps | grep -i rss | awk '{sum+=$2} END {print sum " KB"}'
+        </code>
+      </div>
+
+      <hr/>
+
+      <div class="summary-section">
+        <h2>📋 Summary</h2>
+        
+        <p>The "everything is a file" philosophy is more than just a design choice - it's the foundation that makes Linux incredibly powerful and flexible. This unified approach provides:</p>
+        
+        <h3>🎯 Key Benefits:</h3>
+        <ul>
+          <li><strong>Unified Interface:</strong> Same tools work with files, devices, processes, and system information</li>
+          <li><strong>Powerful Scripting:</strong> Everything can be automated using standard file operations</li>
+          <li><strong>Transparency:</strong> System internals are accessible and inspectable</li>
+          <li><strong>Composability:</strong> Tools can be combined in unlimited ways</li>
+          <li><strong>Simplicity:</strong> One set of concepts applies everywhere</li>
+        </ul>
+        
+        <h3>🔧 Practical Impact:</h3>
+        <ul>
+          <li><strong>System Administration:</strong> Monitor and control systems using simple file operations</li>
+          <li><strong>Development:</strong> Debug applications by examining /proc and /sys</li>
+          <li><strong>Automation:</strong> Script complex operations using basic file commands</li>
+          <li><strong>Security:</strong> Analyze system state through filesystem interfaces</li>
+        </ul>
+        
+        <p><strong>Bottom Line:</strong> Understanding that "everything is a file" in Linux opens up a world of possibilities. It explains why Linux is so scriptable, why command-line tools are so powerful, and why the system feels so coherent despite its complexity. This philosophy turns the entire operating system into a programmable interface.</p>
+      </div>
+    `,
+    date: 'September 13, 2025',
+    author: {
+      name: 'Surendra Singh',
+      avatar: 'https://media.licdn.com/dms/image/v2/D5603AQEL3m0C52en4w/profile-displayphoto-shrink_400_400/B56ZOIchfGGgAg-/0/1733161000194?e=1759968000&v=beta&t=NQ2K9AYE6cIqsD3o70rwTgmADrswmc5Rl6cIkLnc6Ts',
+      profile: 'https://surendra-bishnoi29.github.io/'
+    },
+    image: 'https://images.pexels.com/photos/4164418/pexels-photo-4164418.jpeg?auto=compress&cs=tinysrgb&w=800',
+    category: 'Linux',
+    readTime: '12 min read'
+  },
+  {
+    id: '3',
+    title: 'Everything is Object: Understanding Python\'s Core Philosophy',
+    excerpt: 'Discover how Python\'s "everything is an object" principle shapes the language, with practical examples using __mro__() and object introspection.',
+    content: `
+      <div class="tldr-section">
+        <h2>📝 TL;DR</h2>
+        <p><strong>Concept:</strong> In Python, everything is an object - numbers, strings, functions, classes, modules, and even types themselves.</p>
+        <p><strong>Proof:</strong> Use <code>.__mro__()</code>, <code>type()</code>, <code>id()</code>, and <code>dir()</code> to inspect object properties.</p>
+        <p><strong>Benefits:</strong> Uniform interface, dynamic behavior, introspection, metaprogramming capabilities.</p>
+        <p><strong>Impact:</strong> This philosophy enables Python's flexibility, duck typing, and powerful runtime manipulation.</p>
+      </div>
+      
+      <hr/>
+
+      <h2>🐍 Python's Core Truth: Everything is an Object</h2>
+
+      <p>In Python, every piece of data - numbers, strings, functions, classes, modules - is an object with identity, type, and value. This unified design enables powerful introspection, dynamic behavior, and metaprogramming capabilities.</p>
+
+      <hr/>
+
+      <h2>🔍 MRO Proof: Everything Inherits from Object</h2>
+
+      <p>The <code>__mro__</code> attribute (Method Resolution Order) proves that everything inherits from the base <code>object</code> class:</p>
+
+      <div class="code-block">
+        <div class="code-title">MRO Examples</div>
+        <code>
+# Basic types inherit from object<br/>
+print(int.__mro__)    # (&lt;class 'int'&gt;, &lt;class 'object'&gt;)<br/>
+print(str.__mro__)    # (&lt;class 'str'&gt;, &lt;class 'object'&gt;)<br/>
+print(list.__mro__)   # (&lt;class 'list'&gt;, &lt;class 'object'&gt;)<br/>
+<br/>
+# Functions are objects too<br/>
+def my_function(): pass<br/>
+print(type(my_function).__mro__)  # (&lt;class 'function'&gt;, &lt;class 'object'&gt;)<br/>
+<br/>
+# Even None is an object<br/>
+print(type(None).__mro__)  # (&lt;class 'NoneType'&gt;, &lt;class 'object'&gt;)<br/>
+<br/>
+# Classes are objects (instances of type)<br/>
+class MyClass: pass<br/>
+print(type(MyClass).__mro__)  # (&lt;class 'type'&gt;, &lt;class 'object'&gt;)<br/>
+print(type(type).__mro__)     # (&lt;class 'type'&gt;, &lt;class 'object'&gt;)
+        </code>
+      </div>
+
+      <hr/>
+
+      <h2>🧪 Object Properties: Identity, Type, Value</h2>
+
+      <p>Every Python object has three fundamental properties:</p>
+
+      <div class="code-block">
+        <div class="code-title">Object Properties</div>
+        <code>
+def examine_object(obj, name):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"=== {name} ===")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"Identity: {id(obj)}")     # Unique identifier<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"Type: {type(obj)}")       # Object's class<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"Value: {obj}")            # Object's data<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"MRO: {type(obj).__mro__}")  # Inheritance chain<br/>
+<br/>
+examine_object(42, "Integer")<br/>
+examine_object("hello", "String")<br/>
+examine_object([1, 2, 3], "List")<br/>
+examine_object(lambda x: x, "Function")
+        </code>
+      </div>
+
+      <hr/>
+
+      <h2>🏗️ Classes as Objects</h2>
+
+      <p>Classes themselves are objects, instances of the <code>type</code> metaclass:</p>
+
+      <div class="code-block">
+        <div class="code-title">Classes as Objects</div>
+        <code>
+class Person:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;def __init__(self, name):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.name = name<br/>
+<br/>
+# Class is an object<br/>
+print(f"Class type: {type(Person)}")    # &lt;class 'type'&gt;<br/>
+print(f"Class MRO: {Person.__mro__}")   # Inheritance chain<br/>
+print(f"Class ID: {id(Person)}")        # Unique identifier<br/>
+<br/>
+# Classes have attributes<br/>
+print(f"Name: {Person.__name__}")       # 'Person'<br/>
+print(f"Module: {Person.__module__}")   # '__main__'<br/>
+<br/>
+# Modify class at runtime<br/>
+Person.species = "Homo sapiens"<br/>
+print(f"Added: {Person.species}")
+        </code>
+      </div>
+
+      <hr/>
+
+      <h2>🔧 Practical Applications</h2>
+
+      <h3>Dynamic Object Inspection</h3>
+
+      <div class="code-block">
+        <div class="code-title">Object Inspector</div>
+        <code>
+def inspect_object(obj):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"Type: {type(obj)}")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"MRO: {type(obj).__mro__}")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"Callable: {callable(obj)}")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"Iterable: {hasattr(obj, '__iter__')}")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"Methods: {[m for m in dir(obj) if not m.startswith('_')][:3]}")<br/>
+<br/>
+inspect_object("hello")<br/>
+inspect_object([1, 2, 3])<br/>
+inspect_object(lambda x: x*2)
+        </code>
+      </div>
+
+      <h3>Runtime Object Modification</h3>
+
+      <div class="code-block">
+        <div class="code-title">Dynamic Modification</div>
+        <code>
+class Calculator:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;def add(self, a, b):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return a + b<br/>
+<br/>
+calc = Calculator()<br/>
+<br/>
+# Add method to class<br/>
+def multiply(self, a, b):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;return a * b<br/>
+<br/>
+Calculator.multiply = multiply<br/>
+print(calc.multiply(3, 4))  # 12<br/>
+<br/>
+# Add method to instance<br/>
+calc.power = lambda a, b: a ** b<br/>
+print(calc.power(2, 3))     # 8
+        </code>
+      </div>
+
+      <hr/>
+
+      <h2>🎭 Duck Typing</h2>
+
+      <p>Objects define behavior through methods, not explicit types:</p>
+
+      <div class="code-block">
+        <div class="code-title">Duck Typing Example</div>
+        <code>
+class Duck:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;def quack(self): return "Quack!"<br/>
+<br/>
+class Robot:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;def quack(self): return "Beep!"<br/>
+<br/>
+def make_sound(obj):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;return obj.quack()  # Works with any object having quack()<br/>
+<br/>
+print(make_sound(Duck()))   # "Quack!"<br/>
+print(make_sound(Robot()))  # "Beep!"
+        </code>
+      </div>
+
+      <hr/>
+
+      <h2>🧬 Metaprogramming: Creating Classes Dynamically</h2>
+
+      <div class="code-block">
+        <div class="code-title">Dynamic Class Creation</div>
+        <code>
+# Create class using type() constructor<br/>
+def init_method(self, name):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;self.name = name<br/>
+<br/>
+def greet_method(self):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;return f"Hello, {self.name}"<br/>
+<br/>
+# Dynamic class creation<br/>
+DynamicPerson = type(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;'DynamicPerson',              # Class name<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(object,),                    # Base classes<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{                             # Class attributes<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'__init__': init_method,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'greet': greet_method<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+)<br/>
+<br/>
+person = DynamicPerson("Alice")<br/>
+print(person.greet())  # "Hello, Alice"<br/>
+print(DynamicPerson.__mro__)  # Shows object inheritance
+        </code>
+      </div>
+
+      <hr/>
+
+      <h2>🔍 Object Identity vs Equality</h2>
+
+      <div class="code-block">
+        <div class="code-title">Identity vs Equality</div>
+        <code>
+a = [1, 2, 3]<br/>
+b = [1, 2, 3]<br/>
+c = a<br/>
+<br/>
+print(f"a == b: {a == b}")  # True (same content)<br/>
+print(f"a is b: {a is b}")  # False (different objects)<br/>
+print(f"a is c: {a is c}")  # True (same object)<br/>
+<br/>
+# Small integers are cached<br/>
+x, y = 256, 256<br/>
+print(f"256 is 256: {x is y}")  # True (cached)<br/>
+<br/>
+x, y = 257, 257<br/>
+print(f"257 is 257: {x is y}")  # False (not cached)
+        </code>
+      </div>
+
+      <hr/>
+
+      <div class="summary-section">
+        <h2>📋 Summary</h2>
+        
+        <p>Python's "everything is an object" philosophy provides:</p>
+        
+        <h3>🎯 Key Benefits:</h3>
+        <ul>
+          <li><strong>Unified Model:</strong> Same principles apply to all data types</li>
+          <li><strong>MRO Proof:</strong> <code>__mro__</code> shows universal object inheritance</li>
+          <li><strong>Runtime Flexibility:</strong> Inspect and modify objects dynamically</li>
+          <li><strong>Duck Typing:</strong> Focus on behavior, not explicit types</li>
+          <li><strong>Metaprogramming:</strong> Create and modify classes at runtime</li>
+        </ul>
+        
+        <p><strong>Bottom Line:</strong> Understanding objects unlocks Python's true power - from introspection and debugging to advanced metaprogramming techniques. The <code>__mro__</code> attribute provides concrete proof that everything inherits from the base <code>object</code> class.</p>
+      </div>
+    `,
+    date: 'September 13, 2025',
+    author: {
+      name: 'Surendra Singh',
+      avatar: 'https://media.licdn.com/dms/image/v2/D5603AQEL3m0C52en4w/profile-displayphoto-shrink_400_400/B56ZOIchfGGgAg-/0/1733161000194?e=1759968000&v=beta&t=NQ2K9AYE6cIqsD3o70rwTgmADrswmc5Rl6cIkLnc6Ts',
+      profile: 'https://surendra-bishnoi29.github.io/'
+    },
+    image: 'https://images.pexels.com/photos/1181671/pexels-photo-1181671.jpeg?auto=compress&cs=tinysrgb&w=800',
+    category: 'Python',
+    readTime: '14 min read'
   }
 ];
